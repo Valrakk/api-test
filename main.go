@@ -1,41 +1,34 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"log"
-
-	"github.com/graphql-go/graphql"
+	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
 )
 
-func main() {
-	// Schema
-	fields := graphql.Fields{
-		"hello": &graphql.Field{
-			Type: graphql.String,
-			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				return "world", nil
-			},
-		},
-	}
-	rootQuery := graphql.ObjectConfig{Name: "RootQuery", Fields: fields}
-	schemaConfig := graphql.SchemaConfig{Query: graphql.NewObject(rootQuery)}
-	schema, err := graphql.NewSchema(schemaConfig)
+func sendQuery(url string, query string, apiKey string, apiSecretKey string) {
+
+	req, err := http.NewRequest("POST", url, strings.NewReader(query))
 	if err != nil {
-		log.Fatalf("failed to create new schema, error: %v", err)
+		return
 	}
 
-	// Query
-	query := `
-		{
-			hello
-		}
-	`
-	params := graphql.Params{Schema: schema, RequestString: query}
-	r := graphql.Do(params)
-	if len(r.Errors) > 0 {
-		log.Fatalf("failed to execute graphql operation, errors: %+v", r.Errors)
-	}
-	rJSON, _ := json.Marshal(r)
-	fmt.Printf("%s \n", rJSON) // {“data”:{“hello”:”world”}}
+	client := &http.Client{}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-ORIONX-TIMESTAMP", "application/json")
+	req.Header.Set("X-ORIONX-APIKEY", apiKey)
+	req.Header.Set("X-ORIONX-SIGNATURE", "application/json")
+	req.Header.Set("Content-Length", strconv.Itoa(len(query)))
+
+	resp, _ := client.Do(req)
+	fmt.Println(resp)
+
+	return
+}
+
+func main() {
+
 }
